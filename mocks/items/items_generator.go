@@ -38,7 +38,7 @@ func (q itemsQuery) generate(count int) []dmarket.Object {
 		if q.PriceFrom == 0 && q.PriceTo == 0 {
 			items[i].Price.Usd = strconv.Itoa(rand.Intn(10000000) + 1)
 		} else {
-			items[i].Price.Usd = strconv.Itoa(rand.Intn(q.PriceTo-q.PriceFrom+1) - 1 + q.PriceFrom)
+			items[i].Price.Usd = strconv.Itoa(rand.Intn(q.PriceTo-q.PriceFrom+1) + q.PriceFrom)
 		}
 		items[i].GameID = q.GameId
 		items[i].Extra.GameID = q.GameId
