@@ -63,6 +63,7 @@ type Object struct {
 	GameType     string `json:"gameType" faker:"len=5"`
 	Image        string `json:"image" faker:"url"`
 	InMarket     bool   `json:"inMarket"`
+	Overpriced   int    `json:"overpriced" faker:"-"`
 	InstantPrice struct {
 		Dmc string `json:"DMC" faker:"dprice"`
 		Usd string `json:"USD" faker:"dprice"`
