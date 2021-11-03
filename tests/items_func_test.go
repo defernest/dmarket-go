@@ -7,6 +7,7 @@ import (
 	"github.com/defernest/dmarket-go/mocks/common"
 	"github.com/defernest/dmarket-go/mocks/items"
 	"net/http"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -91,6 +92,55 @@ func TestItems_GetItems(t *testing.T) {
 			e := dmarket.NewExchange(ts.Client)
 			_, err := e.Items.GetItems("/exchange/v1/market/items?")
 			require.ErrorIs(t, err, dmarket.ErrUnexpectedAPIResponse)
+		})
+	}
+}
+
+func TestItems_GenerateItems(t *testing.T) {
+	cases := []struct {
+		name   string
+		params items.Params
+		count  int
+	}{
+		{
+			name: "success",
+			params: items.Params{
+				GameId:    "9b92",
+				Title:     "title",
+				Currency:  "USD",
+				PriceFrom: 0,
+				PriceTo:   10,
+			},
+			count: 10,
+		},
+		{
+			name: "success with 0 prices",
+			params: items.Params{
+				GameId:    "9b92",
+				Title:     "title",
+				Currency:  "USD",
+				PriceFrom: 0,
+				PriceTo:   0,
+			},
+			count: 10,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			is := tc.params.GenerateItems(tc.count)
+			require.Len(t, is, tc.count)
+			for _, object := range is {
+				require.Equal(t, object.GameID, tc.params.GameId)
+				require.Equal(t, object.Title, tc.params.Title)
+				price, err := strconv.Atoi(object.Price.Usd)
+				require.NoError(t, err)
+				if tc.params.PriceFrom == 0 && tc.params.PriceTo == 0 {
+					require.Positive(t, price)
+				} else {
+					require.GreaterOrEqual(t, price, tc.params.PriceFrom)
+					require.LessOrEqual(t, price, tc.params.PriceTo)
+				}
+			}
 		})
 	}
 }

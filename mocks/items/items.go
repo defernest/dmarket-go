@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type itemsQuery struct {
+type Params struct {
 	GameId    string `form:"gameId" binding:"required"`
 	Title     string `form:"title"`
 	Currency  string `form:"currency" binding:"required,contains=USD"`
@@ -30,7 +30,7 @@ func (e *EndpointBehaviorOK) Endpoint() (httpMethod string, relativePath string,
 			}
 		}()
 
-		var itemsQuery itemsQuery
+		var itemsQuery Params
 		err := context.ShouldBindQuery(&itemsQuery)
 		if err != nil || !e.cursorValid(itemsQuery.Cursor) {
 			context.String(dmarket.ErrorRepresentation{Code: http.StatusBadRequest}.String())
@@ -39,9 +39,9 @@ func (e *EndpointBehaviorOK) Endpoint() (httpMethod string, relativePath string,
 
 		resp := dmarket.GetItemsResponse{Total: dmarket.Total{Items: e.count}, Cursor: e.cursor}
 		if (e.count - itemsQuery.Limit) >= 0 {
-			resp.Objects = itemsQuery.generate(itemsQuery.Limit)
+			resp.Objects = itemsQuery.GenerateItems(itemsQuery.Limit)
 		} else {
-			resp.Objects = itemsQuery.generate(e.count)
+			resp.Objects = itemsQuery.GenerateItems(e.count)
 		}
 		context.JSON(http.StatusOK, &resp)
 		e.count -= itemsQuery.Limit

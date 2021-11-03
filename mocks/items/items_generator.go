@@ -24,7 +24,7 @@ func (e *EndpointBehaviorOK) cursorValid(queryCursor string) bool {
 	return false
 }
 
-func (q itemsQuery) generate(count int) []dmarket.Object {
+func (q Params) GenerateItems(count int) []dmarket.Object {
 	items := make([]dmarket.Object, count)
 	for i := 0; i < len(items); i++ {
 		err := faker.FakeData(&items[i])
