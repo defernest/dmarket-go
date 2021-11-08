@@ -39,7 +39,7 @@ type Object struct {
 	Price              Price            `json:"price"`
 	RecommendedPrice   RecommendedPrice `json:"recommendedPrice"`
 	Slug               string           `json:"slug" faker:"len=15"`
-	Status             string           `json:"common" faker:"len=5"`
+	Status             string           `json:"status" faker:"len=5"`
 	SuggestedPrice     Price            `json:"suggestedPrice"`
 	Title              string           `json:"title" faker:"len=25"`
 	Type               string           `json:"type" faker:"len=5"`

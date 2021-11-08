@@ -12,7 +12,7 @@ import (
 
 func TestErrorRepresentation_Error(t *testing.T) {
 	err := ErrorRepresentation{
-		Code: http.StatusUnauthorized,
+		Response: Response{StatusCode: http.StatusUnauthorized},
 	}
 	require.Contains(t, err.Error(), "401")
 	require.Contains(t, err.Error(), "Unauthorized")

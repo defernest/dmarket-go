@@ -60,7 +60,7 @@ func MustReturnHTTPError(method, path string, errcode int) *EndpointBehavior {
 		httpMethod:   method,
 		relativePath: path,
 		handlerFunc: func(context *gin.Context) {
-			context.String(dmarket.ErrorRepresentation{Code: errcode}.String())
+			context.String(dmarket.ErrorRepresentation{Response: dmarket.Response{StatusCode: errcode}}.String())
 		},
 	}
 }

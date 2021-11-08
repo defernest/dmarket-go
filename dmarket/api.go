@@ -23,10 +23,10 @@ type defaultClient struct {
 	publicKey, privateKey string
 }
 
-func (c defaultClient) Get(endpoint string) (*Response, error) {
+func (c defaultClient) Get(endpoint string) (Response, error) {
 	req, err := http.NewRequest(http.MethodGet, endpoint, http.NoBody)
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 	trace := &httptrace.ClientTrace{
 		GotConn: func(connInfo httptrace.GotConnInfo) {
@@ -45,10 +45,10 @@ func (c defaultClient) Get(endpoint string) (*Response, error) {
 	return c.Do(req)
 }
 
-func (c defaultClient) Post(endpoint string, body io.Reader) (*Response, error) {
+func (c defaultClient) Post(endpoint string, body io.Reader) (Response, error) {
 	req, err := http.NewRequest(http.MethodPost, endpoint, body)
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 	defer func() {
 		err := req.Body.Close()
@@ -59,10 +59,10 @@ func (c defaultClient) Post(endpoint string, body io.Reader) (*Response, error) 
 	return c.Do(req)
 }
 
-func (c defaultClient) Delete(endpoint string, body io.Reader) (*Response, error) {
+func (c defaultClient) Delete(endpoint string, body io.Reader) (Response, error) {
 	req, err := http.NewRequest(http.MethodDelete, endpoint, body)
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 	defer func() {
 		err := req.Body.Close()
@@ -73,10 +73,10 @@ func (c defaultClient) Delete(endpoint string, body io.Reader) (*Response, error
 	return c.Do(req)
 }
 
-func (c defaultClient) Patch(endpoint string, body io.Reader) (*Response, error) {
+func (c defaultClient) Patch(endpoint string, body io.Reader) (Response, error) {
 	req, err := http.NewRequest(http.MethodPatch, endpoint, body)
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 	defer func() {
 		err := req.Body.Close()
@@ -114,7 +114,7 @@ func (c defaultClient) sign(req *http.Request) error {
 /*
 Do performs a request to the Dmarket Items API
 */
-func (c *defaultClient) Do(req *http.Request) (*Response, error) {
+func (c *defaultClient) Do(req *http.Request) (Response, error) {
 	defer func() {
 		if err := recover(); err != nil {
 			_, err = fmt.Fprintf(os.Stderr, "unexpected error when Do request - abort!\nerror: %s", err)
@@ -126,18 +126,18 @@ func (c *defaultClient) Do(req *http.Request) (*Response, error) {
 	}()
 	err := c.rateLimit.Wait(context.TODO())
 	if err != nil {
-		return nil, fmt.Errorf("api: request rate limiter error: %w", err)
+		return Response{}, fmt.Errorf("api: request rate limiter error: %w", err)
 	}
 	req.URL = c.baseURL.ResolveReference(req.URL)
 	err = c.sign(req)
 	if err != nil {
-		return nil, fmt.Errorf("api: new request sign error: %w", err)
+		return Response{}, fmt.Errorf("api: new request sign error: %w", err)
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("api: client Do request error: %w", err)
+		return Response{}, fmt.Errorf("api: client Do request error: %w", err)
 	}
 	defer func() {
 		err := req.Body.Close()
@@ -145,7 +145,7 @@ func (c *defaultClient) Do(req *http.Request) (*Response, error) {
 			panic("failed when defer resp body close")
 		}
 	}()
-	r := &Response{
+	r := Response{
 		Status:        resp.Status,
 		StatusCode:    resp.StatusCode,
 		ContentLength: resp.ContentLength,
@@ -153,7 +153,7 @@ func (c *defaultClient) Do(req *http.Request) (*Response, error) {
 	}
 	_, err = r.ReadFrom(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("api: read responce body error: %w", err)
+		return Response{}, fmt.Errorf("api: read responce body error: %w", err)
 	}
 	return r, nil
 }

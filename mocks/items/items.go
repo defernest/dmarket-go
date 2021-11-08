@@ -26,14 +26,14 @@ func (e *EndpointBehaviorOK) Endpoint() (httpMethod string, relativePath string,
 	return http.MethodGet, "/exchange/v1/market/items", func(context *gin.Context) {
 		defer func() {
 			if r := recover(); r != nil {
-				context.String(dmarket.ErrorRepresentation{Code: http.StatusInternalServerError}.String())
+				context.String(dmarket.ErrorRepresentation{Response: dmarket.Response{StatusCode: http.StatusInternalServerError}}.String())
 			}
 		}()
 
 		var itemsQuery Params
 		err := context.ShouldBindQuery(&itemsQuery)
 		if err != nil || !e.cursorValid(itemsQuery.Cursor) {
-			context.String(dmarket.ErrorRepresentation{Code: http.StatusBadRequest}.String())
+			context.String(dmarket.ErrorRepresentation{Response: dmarket.Response{StatusCode: http.StatusBadRequest}}.String())
 			return
 		}
 

@@ -16,9 +16,7 @@ const (
 )
 
 var (
-	// ErrUnexpectedAPIResponse
-	ErrUnexpectedAPIResponse = errors.New("unexpected HTTP error from dmarket items endpoint")
-	// ErrUnmarshalAPIResponse
+	// ErrUnmarshalAPIResponse returns when client cannot unmarshal Dmarket response body
 	ErrUnmarshalAPIResponse = errors.New("can not unmarshal resp json")
 	// ErrIncorrectPriceRange displays an error of an incorrectly defined price range for request
 	ErrIncorrectPriceRange = errors.New("incorrect price range")
@@ -159,7 +157,9 @@ func (i *Items) GetItems(endpointURI string) (*GetItemsResponse, error) {
 	}
 	var itemsResp GetItemsResponse
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("api (items) error: %w http code: %s body: %s", ErrUnexpectedAPIResponse, resp.Status, resp.Body.String())
+		return nil, fmt.Errorf("api (items) error: %w", ErrorRepresentation{
+			Response: resp,
+		})
 	}
 	err = json.Unmarshal(resp.Body.Bytes(), &itemsResp)
 	if err != nil {

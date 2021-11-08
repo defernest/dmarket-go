@@ -91,7 +91,7 @@ func TestItems_GetItems(t *testing.T) {
 			ts := mocks.NewDmarketServer(common.MustReturnHTTPError(http.MethodGet, "/exchange/v1/market/items", tt.errCode))
 			e := dmarket.NewExchange(ts.Client)
 			_, err := e.Items.GetItems("/exchange/v1/market/items?")
-			require.ErrorIs(t, err, dmarket.ErrUnexpectedAPIResponse)
+			require.ErrorAs(t, err, &dmarket.ErrorRepresentation{})
 		})
 	}
 }

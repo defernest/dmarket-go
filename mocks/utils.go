@@ -20,39 +20,39 @@ type dmarketClient struct {
 	rateLimit *rate.Limiter
 }
 
-func (c dmarketClient) Get(endpoint string) (*dmarket.Response, error) {
+func (c dmarketClient) Get(endpoint string) (dmarket.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, c.server.URL()+endpoint, http.NoBody)
 	if err != nil {
-		return nil, err
+		return dmarket.Response{}, err
 	}
 	return c.Do(req)
 }
 
-func (c dmarketClient) Post(endpoint string, body io.Reader) (*dmarket.Response, error) {
+func (c dmarketClient) Post(endpoint string, body io.Reader) (dmarket.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, c.server.URL()+endpoint, body)
 	if err != nil {
-		return nil, err
+		return dmarket.Response{}, err
 	}
 	return c.Do(req)
 }
 
-func (c dmarketClient) Delete(endpoint string, body io.Reader) (*dmarket.Response, error) {
+func (c dmarketClient) Delete(endpoint string, body io.Reader) (dmarket.Response, error) {
 	panic(fmt.Errorf("implement me %s, %v", endpoint, body))
 }
 
-func (c dmarketClient) Patch(endpoint string, body io.Reader) (*dmarket.Response, error) {
+func (c dmarketClient) Patch(endpoint string, body io.Reader) (dmarket.Response, error) {
 	panic(fmt.Errorf("implement me %s, %v", endpoint, body))
 }
 
-func (c dmarketClient) Do(req *http.Request) (*dmarket.Response, error) {
+func (c dmarketClient) Do(req *http.Request) (dmarket.Response, error) {
 	err := c.rateLimit.Wait(context.TODO())
 	if err != nil {
-		return nil, fmt.Errorf("api: request rate limiter error: %w", err)
+		return dmarket.Response{}, fmt.Errorf("api: request rate limiter error: %w", err)
 	}
 	timestamp := strconv.Itoa(int(time.Now().UTC().Unix()))
 	signature, err := c.server.sign(req.Method, req.URL.RequestURI(), timestamp)
 	if err != nil {
-		return nil, fmt.Errorf("api mock: new request sign error: %w", err)
+		return dmarket.Response{}, fmt.Errorf("api mock: new request sign error: %w", err)
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
@@ -61,9 +61,9 @@ func (c dmarketClient) Do(req *http.Request) (*dmarket.Response, error) {
 	req.Header.Set("X-Api-Key", c.server.PublicKey)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("api mock: do request sign error: %w", err)
+		return dmarket.Response{}, fmt.Errorf("api mock: do request sign error: %w", err)
 	}
-	r := &dmarket.Response{
+	r := dmarket.Response{
 		Status:        resp.Status,
 		StatusCode:    resp.StatusCode,
 		ContentLength: resp.ContentLength,
@@ -71,7 +71,7 @@ func (c dmarketClient) Do(req *http.Request) (*dmarket.Response, error) {
 	}
 	_, err = r.ReadFrom(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("api mock: read responce body error: %w", err)
+		return dmarket.Response{}, fmt.Errorf("api mock: read responce body error: %w", err)
 	}
 	return r, nil
 }

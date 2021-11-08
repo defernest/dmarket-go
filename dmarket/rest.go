@@ -8,22 +8,22 @@ import (
 )
 
 type Requester interface {
-	Get(endpoint string) (*Response, error)
-	Post(endpoint string, body io.Reader) (*Response, error)
-	Delete(endpoint string, body io.Reader) (*Response, error)
-	Patch(endpoint string, body io.Reader) (*Response, error)
+	Get(endpoint string) (Response, error)
+	Post(endpoint string, body io.Reader) (Response, error)
+	Delete(endpoint string, body io.Reader) (Response, error)
+	Patch(endpoint string, body io.Reader) (Response, error)
 }
 
 type ErrorRepresentation struct {
-	Code int
+	Response Response
 }
 
 func (e ErrorRepresentation) Error() string {
-	return fmt.Sprintf("dmarket API representation error: code %d: %s", e.Code, http.StatusText(e.Code))
+	return fmt.Sprintf("dmarket API representation error: code %d: %s", e.Response.StatusCode, http.StatusText(e.Response.StatusCode))
 }
 
 func (e ErrorRepresentation) String() (int, string) {
-	return e.Code, fmt.Sprintf("%d: %s", e.Code, http.StatusText(e.Code))
+	return e.Response.StatusCode, fmt.Sprintf("%d: %s", e.Response.StatusCode, http.StatusText(e.Response.StatusCode))
 }
 
 type RuntimeError struct {

@@ -68,7 +68,7 @@ func rateLimit() gin.HandlerFunc {
 	limiter := rate.NewLimiter(10, 5)
 	return func(context *gin.Context) {
 		if !limiter.Allow() {
-			context.String(dmarket.ErrorRepresentation{Code: http.StatusTooManyRequests}.String())
+			context.String(dmarket.ErrorRepresentation{Response: dmarket.Response{StatusCode: http.StatusTooManyRequests}}.String())
 			context.Abort()
 		}
 	}
@@ -90,7 +90,7 @@ func logger() gin.LogFormatter {
 
 func noRoute() gin.HandlerFunc {
 	return func(context *gin.Context) {
-		context.String(dmarket.ErrorRepresentation{Code: http.StatusNotFound}.String())
+		context.String(dmarket.ErrorRepresentation{Response: dmarket.Response{StatusCode: http.StatusNotFound}}.String())
 		context.AbortWithError(http.StatusNotFound, fmt.Errorf("no route to path '%s'", context.Request.RequestURI))
 	}
 }
@@ -99,7 +99,7 @@ func checkHeaders() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		pub, err := hex.DecodeString(context.GetHeader("X-Api-Key"))
 		if err != nil || len(pub) != 32 {
-			context.String(dmarket.ErrorRepresentation{Code: http.StatusBadRequest}.String())
+			context.String(dmarket.ErrorRepresentation{Response: dmarket.Response{StatusCode: http.StatusBadRequest}}.String())
 			context.AbortWithError(http.StatusBadRequest, errors.New("X-Api-Key error: decode error or len not equal 32"))
 			return
 		}
@@ -109,7 +109,7 @@ func checkHeaders() gin.HandlerFunc {
 		containDMAR := strings.HasPrefix(signHeader, "dmar ed25519 ")
 		sign, err := hex.DecodeString(strings.TrimPrefix(signHeader, "dmar ed25519 "))
 		if err != nil || !containDMAR || len(sign) < 1 {
-			context.String(dmarket.ErrorRepresentation{Code: http.StatusBadRequest}.String())
+			context.String(dmarket.ErrorRepresentation{Response: dmarket.Response{StatusCode: http.StatusBadRequest}}.String())
 			context.AbortWithError(http.StatusBadRequest, errors.New("X-Request-Sign error: decode error, not contain dmar prefix or len < 1"))
 			return
 		}
@@ -117,14 +117,14 @@ func checkHeaders() gin.HandlerFunc {
 
 		signdate, err := strconv.Atoi(context.GetHeader("X-Sign-Date"))
 		if err != nil || signdate <= 0 {
-			context.String(dmarket.ErrorRepresentation{Code: http.StatusBadRequest}.String())
+			context.String(dmarket.ErrorRepresentation{Response: dmarket.Response{StatusCode: http.StatusBadRequest}}.String())
 			context.AbortWithError(http.StatusBadRequest, errors.New("X-Sign-Date error: atoi error or len <= 0"))
 			return
 		}
 		context.Set("X-Sign-Date", signdate)
 
 		if context.GetHeader("Accept") != "application/json" || context.GetHeader("Content-Type") != "application/json" {
-			context.String(dmarket.ErrorRepresentation{Code: http.StatusBadRequest}.String())
+			context.String(dmarket.ErrorRepresentation{Response: dmarket.Response{StatusCode: http.StatusBadRequest}}.String())
 			context.AbortWithError(http.StatusBadRequest, errors.New("accept or content-Type headers not equal 'application/json'"))
 		}
 		return
@@ -144,7 +144,7 @@ func dmarketAuth() gin.HandlerFunc {
 					fmt.Sprintf("X-Sign-Date correct: [%t] (false OK) | ed25519 verification: [%t] (true OK)",
 						signdate > timestamp, ed25519.Verify(pub.([]byte), msg, sign.([]byte))),
 				)
-			context.String(dmarket.ErrorRepresentation{Code: http.StatusUnauthorized}.String())
+			context.String(dmarket.ErrorRepresentation{Response: dmarket.Response{StatusCode: http.StatusUnauthorized}}.String())
 			context.AbortWithStatus(http.StatusUnauthorized)
 		}
 		return
