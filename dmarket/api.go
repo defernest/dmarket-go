@@ -5,11 +5,10 @@ import (
 	"crypto/ed25519"
 	"encoding/hex"
 	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"io"
 	"net/http"
-	"net/http/httptrace"
 	"net/url"
-	"os"
 	"strconv"
 	"time"
 
@@ -28,20 +27,6 @@ func (c defaultClient) Get(endpoint string) (Response, error) {
 	if err != nil {
 		return Response{}, err
 	}
-	trace := &httptrace.ClientTrace{
-		GotConn: func(connInfo httptrace.GotConnInfo) {
-			if connInfo.IdleTime > 3*time.Second {
-				fmt.Printf("Long Conn: %s (%s)\n", connInfo.IdleTime, connInfo.Conn.RemoteAddr().String())
-			}
-		},
-	}
-	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
-	defer func() {
-		err := req.Body.Close()
-		if err != nil {
-			panic("failed when defer resp body close")
-		}
-	}()
 	return c.Do(req)
 }
 
@@ -114,14 +99,10 @@ func (c defaultClient) sign(req *http.Request) error {
 /*
 Do performs a request to the Dmarket Items API
 */
-func (c *defaultClient) Do(req *http.Request) (Response, error) {
+func (c *defaultClient) Do(req *http.Request) (response Response, errs error) {
 	defer func() {
 		if err := recover(); err != nil {
-			_, err = fmt.Fprintf(os.Stderr, "unexpected error when Do request - abort!\nerror: %s", err)
-			if err != nil {
-				fmt.Println(err)
-			}
-			return
+			errs = multierror.Append(errs, fmt.Errorf("unexpected error when Do request - abort!\n\terror: %s", err))
 		}
 	}()
 	err := c.rateLimit.Wait(context.TODO())
@@ -140,20 +121,19 @@ func (c *defaultClient) Do(req *http.Request) (Response, error) {
 		return Response{}, fmt.Errorf("api: client Do request error: %w", err)
 	}
 	defer func() {
-		err := req.Body.Close()
-		if err != nil {
-			panic("failed when defer resp body close")
+		if resp.Body != nil {
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				errs = multierror.Append(errs, fmt.Errorf("failed when defer resp body close: %w", closeErr))
+			}
 		}
 	}()
-	r := Response{
-		Status:        resp.Status,
-		StatusCode:    resp.StatusCode,
-		ContentLength: resp.ContentLength,
-		Request:       resp.Request,
-	}
-	_, err = r.ReadFrom(resp.Body)
+	response.Status = resp.Status
+	response.StatusCode = resp.StatusCode
+	response.ContentLength = resp.ContentLength
+	response.Request = resp.Request
+	_, err = response.ReadFrom(resp.Body)
 	if err != nil {
 		return Response{}, fmt.Errorf("api: read responce body error: %w", err)
 	}
-	return r, nil
+	return response, nil
 }

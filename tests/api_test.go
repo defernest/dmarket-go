@@ -47,6 +47,13 @@ func TestDefaultClient_Do(t *testing.T) {
 		var doerr *url.Error
 		require.ErrorAs(t, err, &doerr)
 	})
+	t.Run("dont panic", func(t *testing.T) {
+		ts := mocks.NewDmarketServer(common.MustReturnStatusOK(http.MethodGet, "/"))
+		apiClient, err := dmarket.NewClient(ts.URL(), ts.PublicKey, ts.PrivareKey)
+		require.NoError(t, err)
+		_, err = apiClient.DefaultClient.Do(nil)
+		require.Error(t, err)
+	})
 }
 
 func Test_DefaultClient_Delete(t *testing.T) {
