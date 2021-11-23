@@ -37,7 +37,7 @@ func NewClient(baseURL, publicKey, privateKey string) (*Client, error) {
 	c := &Client{
 		DefaultClient: &defaultClient{
 			http:       &http.Client{Timeout: 10 * time.Second},
-			rateLimit:  rate.NewLimiter(rate.Every(125*time.Millisecond), 8),
+			rateLimit:  rate.NewLimiter(rate.Every(125*time.Millisecond), 1),
 			baseURL:    base,
 			publicKey:  publicKey,
 			privateKey: privateKey,

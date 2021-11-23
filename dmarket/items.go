@@ -132,7 +132,6 @@ func (i *Items) getAllItems(ctx context.Context, from string, options ...Options
 				items, err := i.GetItems(from)
 				if err != nil || len(items.Objects) == 0 {
 					results <- &GetItemsResponse{Error: err}
-					return
 				}
 				results <- items
 			}
