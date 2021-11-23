@@ -129,18 +129,15 @@ func (i *Items) getAllItems(ctx context.Context, from string, options ...Options
 			case <-ctx.Done():
 				return
 			default:
-				items, err := i.GetItems(from)
-				if err != nil || len(items.Objects) == 0 {
-					results <- &GetItemsResponse{Error: err}
-				}
-				results <- items
+				results <- i.GetItems(from)
 			}
 		}
 	}()
 	return results
 }
 
-func (i *Items) GetItems(endpointURI string) (*GetItemsResponse, error) {
+func (i *Items) GetItems(endpointURI string) *GetItemsResponse {
+	itemsResp := new(GetItemsResponse)
 	params := &url.Values{
 		"gameId":    {"9a92"},
 		"currency":  {"USD"},
@@ -152,19 +149,21 @@ func (i *Items) GetItems(endpointURI string) (*GetItemsResponse, error) {
 	}
 	resp, err := i.client.Get(endpointURI + params.Encode())
 	if err != nil {
-		return nil, fmt.Errorf("api (items): get items request error: %w", err)
+		itemsResp.Error = fmt.Errorf("api (items): get items request error: %w", err)
+		return itemsResp
 	}
-	var itemsResp GetItemsResponse
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("api (items) error: %w", ErrorRepresentation{
+		itemsResp.Error = fmt.Errorf("api (items) error: %w", ErrorRepresentation{
 			Response: resp,
 		})
+		return itemsResp
 	}
 	err = json.Unmarshal(resp.Body.Bytes(), &itemsResp)
 	if err != nil {
-		return nil, fmt.Errorf("api (items) error: %w into GetIntemsResponse struct "+
+		itemsResp.Error = fmt.Errorf("api (items) error: %w into GetIntemsResponse struct "+
 			"resp code: %s resp body: %s unmarshal error: %s", ErrUnmarshalAPIResponse, resp.Status, resp.Body.String(), err)
+		return itemsResp
 	}
 	i.cursor = itemsResp.Cursor
-	return &itemsResp, nil
+	return itemsResp
 }

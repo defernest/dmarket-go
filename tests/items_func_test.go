@@ -68,15 +68,15 @@ func TestItems_GetItems(t *testing.T) {
 		wantItems := 100
 		ts := mocks.NewDmarketServer(items.MustReturnSuccess(wantItems))
 		e := dmarket.NewExchange(ts.Client)
-		response, err := e.Items.GetItems("/exchange/v1/market/items?")
-		require.NoError(t, err)
+		response := e.Items.GetItems("/exchange/v1/market/items?")
+		require.NoError(t, response.Error)
 		require.Len(t, response.Objects, wantItems)
 	})
 	t.Run("error: unmarshal error", func(t *testing.T) {
 		ts := mocks.NewDmarketServer(common.MustReturnBadBody(http.MethodGet, "/exchange/v1/market/items"))
 		e := dmarket.NewExchange(ts.Client)
-		_, err := e.Items.GetItems("/exchange/v1/market/items?")
-		require.ErrorIs(t, err, dmarket.ErrUnmarshalAPIResponse)
+		response := e.Items.GetItems("/exchange/v1/market/items?")
+		require.ErrorIs(t, response.Error, dmarket.ErrUnmarshalAPIResponse)
 	})
 	errTests := []struct {
 		name    string
@@ -90,8 +90,8 @@ func TestItems_GetItems(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ts := mocks.NewDmarketServer(common.MustReturnHTTPError(http.MethodGet, "/exchange/v1/market/items", tt.errCode))
 			e := dmarket.NewExchange(ts.Client)
-			_, err := e.Items.GetItems("/exchange/v1/market/items?")
-			require.ErrorAs(t, err, &dmarket.ErrorRepresentation{})
+			response := e.Items.GetItems("/exchange/v1/market/items?")
+			require.ErrorAs(t, response.Error, &dmarket.ErrorRepresentation{})
 		})
 	}
 }
