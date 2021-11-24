@@ -100,12 +100,14 @@ func (c defaultClient) sign(req *http.Request) error {
 Do performs a request to the Dmarket Items API
 */
 func (c *defaultClient) Do(req *http.Request) (response Response, errs error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	defer func() {
 		if err := recover(); err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("unexpected error when Do request - abort!\n\terror: %s", err))
 		}
+		cancel()
 	}()
-	err := c.rateLimit.Wait(context.TODO())
+	err := c.rateLimit.Wait(ctx)
 	if err != nil {
 		return Response{}, fmt.Errorf("api: request rate limiter error: %w", err)
 	}
@@ -116,7 +118,7 @@ func (c *defaultClient) Do(req *http.Request) (response Response, errs error) {
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := c.http.Do(req)
+	resp, err := c.http.Do(req.WithContext(ctx))
 	if err != nil {
 		return Response{}, fmt.Errorf("api: client Do request error: %w", err)
 	}
